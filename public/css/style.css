@@ -1,0 +1,37 @@
+/* style.css */
+body {
+  background-color: #ffffff;
+  color: #333;
+  font-family: Arial, sans-serif;
+}
+
+.navbar {
+  background-color: #fff;
+  border-bottom: 2px solid #dc3545; /* Merah */
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Card styling */
+.card {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Responsif */
+@media (max-width: 576px) {
+  .navbar {
+    text-align: center;
+  }
+}
