@@ -1,0 +1,13 @@
+{
+  "name": "streamx",
+  "version": "1.0.0",
+  "description": "Website multi live streaming",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5"
+  }
+}
