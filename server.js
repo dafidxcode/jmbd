@@ -1,105 +1,97 @@
 // server.js
 const express = require('express');
-const multer  = require('multer');
+const multer = require('multer');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// Konfigurasi penyimpanan file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    // Simpan dengan nama asli atau bisa dikustomisasi
-    cb(null, Date.now() + '-' + file.originalname)
-  }
-});
-const upload = multer({ storage: storage });
-
-// Middleware untuk parsing JSON
+// Middleware untuk parsing JSON dan form urlencoded
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Sajikan file statis di folder public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Endpoint upload video
+// Pastikan folder uploads ada
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR);
+}
+
+// Konfigurasi Multer untuk upload file
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
+// Endpoint untuk mengunggah video
 app.post('/upload', upload.single('video'), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ message: 'File tidak ditemukan' });
+    return res.status(400).json({ error: 'File video diperlukan' });
   }
-  res.json({ message: 'Upload berhasil', file: req.file.filename });
+  res.json({ message: 'Upload berhasil', filename: req.file.filename });
 });
 
-// Fungsi untuk memulai streaming menggunakan FFmpeg
-function startStreaming({ inputFile, orientation, fps, bitrate, quality, rtmpUrl }) {
-  let videoFilter = '';
-  if (orientation === 'portrait') {
-    // Misal, untuk portrait set resolusi 720x1280
-    videoFilter = 'scale=720:1280';
-  } else {
-    // Untuk landscape set resolusi 1280x720
-    videoFilter = 'scale=1280:720';
-  }
-
+// Fungsi untuk memulai live streaming dengan FFmpeg
+function startStreaming(videoPath, rtmpUrl) {
+  // Contoh perintah FFmpeg:
+  // -re           : Baca input dengan kecepatan aslinya
+  // -stream_loop -1 : Loop video tanpa henti
+  // -c:v libx264  : Gunakan codec video H.264
+  // -b:v 2500k    : Bitrate video 2500 kbps
+  // -preset veryfast : Preset encoding
+  // -r 30         : 30 FPS
+  // -g 60         : Keyframe setiap 60 frame
+  // -c:a aac     : Gunakan codec audio AAC
+  // -b:a 128k    : Bitrate audio 128 kbps
+  // -ar 44100   : Sample rate audio 44100 Hz
+  // -f flv       : Format output FLV untuk RTMP
   const ffmpegArgs = [
     '-re',
-    '-stream_loop', '-1', // Loop video tanpa henti
-    '-i', inputFile,
-    '-vf', videoFilter,
-    '-r', fps.toString(),
-    '-b:v', bitrate,
-    '-preset', quality,
+    '-stream_loop', '-1',
+    '-i', videoPath,
+    '-c:v', 'libx264',
+    '-b:v', '2500k',
+    '-preset', 'veryfast',
+    '-r', '30',
+    '-g', '60',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-ar', '44100',
     '-f', 'flv',
     rtmpUrl
   ];
 
-  console.log('Menjalankan FFmpeg dengan argumen:', ffmpegArgs.join(' '));
+  console.log('Memulai streaming dengan perintah: ffmpeg ' + ffmpegArgs.join(' '));
   const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
 
-  ffmpegProcess.stdout.on('data', (data) => {
-    console.log('FFmpeg stdout:', data.toString());
-  });
-
-  ffmpegProcess.stderr.on('data', (data) => {
-    console.error('FFmpeg stderr:', data.toString());
-  });
-
-  ffmpegProcess.on('exit', (code) => {
-    console.log(`Proses FFmpeg selesai dengan kode ${code}`);
-  });
+  ffmpegProcess.stdout.on('data', (data) => console.log(`ffmpeg stdout: ${data}`));
+  ffmpegProcess.stderr.on('data', (data) => console.log(`ffmpeg stderr: ${data}`));
+  ffmpegProcess.on('close', (code) => console.log(`Proses FFmpeg berhenti dengan kode ${code}`));
 
   return ffmpegProcess;
 }
 
-// Endpoint untuk memulai streaming ke beberapa platform
+// Endpoint untuk memulai streaming
 app.post('/start-stream', (req, res) => {
-  const {
-    fileName,    // nama file yang telah diupload, misal: '1627891234567-video.mp4'
-    orientation, // 'portrait' atau 'landscape'
-    fps,         // misal: 30
-    bitrate,     // misal: '2500k'
-    quality,     // misal: 'fast'
-    rtmpUrls     // array URL RTMP, misal: [ 'rtmp://a.rtmp.youtube.com/live2/xxx', 'rtmp://live-api-s.facebook.com/rtmp/yyy' ]
-  } = req.body;
-
-  if (!fileName || !rtmpUrls || rtmpUrls.length === 0) {
-    return res.status(400).json({ message: 'Parameter tidak lengkap' });
+  const { filename, rtmpUrl } = req.body;
+  if (!filename) {
+    return res.status(400).json({ error: 'Filename diperlukan' });
+  }
+  const videoPath = path.join(UPLOAD_DIR, filename);
+  if (!fs.existsSync(videoPath)) {
+    return res.status(404).json({ error: 'File tidak ditemukan' });
   }
 
-  const inputFile = path.join(__dirname, 'uploads', fileName);
-  const processes = [];
+  // Jika rtmpUrl tidak dikirimkan, gunakan default RTMPS Facebook dengan API key yang diberikan
+  const streamUrl = rtmpUrl || 'rtmps://live-api-s.facebook.com:443/rtmp/FB-2062378527522704-0-Ab2r5gJPGBAybYSSp3rG9KKL';
 
-  rtmpUrls.forEach(url => {
-    const proc = startStreaming({ inputFile, orientation, fps, bitrate, quality, rtmpUrl: url });
-    processes.push(proc);
-  });
-
-  res.json({ message: 'Streaming dimulai', processCount: processes.length });
+  const streamProcess = startStreaming(videoPath, streamUrl);
+  res.json({ message: 'Streaming dimulai', processId: streamProcess.pid });
 });
 
-app.listen(port, () => {
-  console.log(`Server berjalan pada http://localhost:${port}`);
-});
+app.listen(PORT, () => console.log(`Server berjalan pada http://localhost:${PORT}`));
