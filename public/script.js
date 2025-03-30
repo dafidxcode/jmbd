@@ -1,57 +1,35 @@
-// Toggle Dark Mode
-const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
-toggleDarkModeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-});
-
 // Upload Form
-const uploadForm = document.getElementById('uploadForm');
-const uploadResult = document.getElementById('uploadResult');
-
-uploadForm.addEventListener('submit', async (e) => {
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const formData = new FormData(uploadForm);
-  try {
-    const res = await fetch('/upload', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    uploadResult.textContent = data.message + '. Nama file: ' + data.file;
-  } catch (error) {
-    uploadResult.textContent = 'Terjadi kesalahan pada upload.';
-  }
+  const form = e.target;
+  const formData = new FormData(form);
+  
+  const response = await fetch('/upload', {
+    method: 'POST',
+    body: formData
+  });
+  
+  const result = await response.json();
+  document.getElementById('uploadResponse').textContent = result.message + (result.filename ? ' - ' + result.filename : '');
 });
 
 // Stream Form
-const streamForm = document.getElementById('streamForm');
-const streamResult = document.getElementById('streamResult');
-
-streamForm.addEventListener('submit', async (e) => {
+document.getElementById('streamForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const formData = new FormData(streamForm);
-  // Mengubah RTMP URLs menjadi array dengan memisahkan berdasarkan koma
-  const rtmpUrls = formData.get('rtmpUrls').split(',').map(url => url.trim());
+  const form = e.target;
+  const formData = new FormData(form);
+  
   const payload = {
-    fileName: formData.get('fileName'),
-    orientation: formData.get('orientation'),
-    fps: parseInt(formData.get('fps'), 10),
-    bitrate: formData.get('bitrate'),
-    quality: formData.get('quality'),
-    rtmpUrls: rtmpUrls
+    filename: formData.get('filename'),
+    rtmpUrl: formData.get('rtmpUrl')
   };
-
-  try {
-    const res = await fetch('/start-stream', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    streamResult.textContent = data.message;
-  } catch (error) {
-    streamResult.textContent = 'Terjadi kesalahan saat memulai streaming.';
-  }
+  
+  const response = await fetch('/start-stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  
+  const result = await response.json();
+  document.getElementById('streamResponse').textContent = result.message;
 });
