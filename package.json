@@ -1,13 +1,18 @@
 {
   "name": "streamx",
   "version": "1.0.0",
-  "description": "Website multi live streaming",
+  "description": "Professional Live Streaming Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1"
+    "sqlite3": "^5.1.6",
+    "multer": "^1.4.5-lts.1",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "express-session": "^1.17.3",
+    "ejs": "^3.1.9"
   }
 }
