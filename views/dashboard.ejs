@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>StreamX - Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand text-danger" href="#">StreamX</a>
+    <div class="ml-auto">
+      <span>Halo, <strong><%= user.username %></strong></span>
+      <a href="/logout" class="btn btn-outline-danger ml-3">Logout</a>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h3>Upload Video</h3>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" action="/upload">
+      <div class="form-group">
+        <label>Pilih video</label>
+        <input type="file" name="video" class="form-control" accept="video/*" required>
+      </div>
+      <div class="form-group">
+        <label>Orientasi Video</label>
+        <select name="orientation" class="form-control">
+          <option value="landscape">Landscape</option>
+          <option value="portrait">Portrait</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-danger">Upload</button>
+    </form>
+    <div id="uploadResponse" class="mt-2"></div>
+
+    <hr>
+
+    <h3>Daftar Video Anda</h3>
+    <% if (videos.length === 0) { %>
+      <p>Belum ada video diupload.</p>
+    <% } else { %>
+      <div class="row">
+        <% videos.forEach(function(video) { %>
+          <div class="col-md-4 mb-3">
+            <div class="card">
+              <!-- Tampilkan nama file dan orientasi -->
+              <div class="card-body">
+                <h5 class="card-title text-danger"><%= video.filename %></h5>
+                <p>Orientasi: <%= video.orientation %></p>
+                <form class="startStreamForm" data-filename="<%= video.filename %>">
+                  <div class="form-group">
+                    <label>RTMP Stream URL</label>
+                    <input type="text" name="streamUrl" class="form-control" value="rtmps://live-api-s.facebook.com:443/rtmp/FB-2062378527522704-0-Ab2r5gJPGBAybYSSp3rG9KKL" required>
+                  </div>
+                  <button type="submit" class="btn btn-danger btn-block">Mulai Streaming</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
