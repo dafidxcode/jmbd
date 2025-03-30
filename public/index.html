@@ -1,61 +1,33 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StreamX</title>
+  <title>StreamX Live Streaming</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>StreamX</h1>
-    <button id="toggleDarkMode">Toggle Dark Mode</button>
-  </header>
-  <main>
-    <section class="upload-section">
-      <h2>Upload Video</h2>
-      <form id="uploadForm">
-        <input type="file" name="video" accept="video/*" required>
-        <button type="submit">Upload</button>
-      </form>
-      <div id="uploadResult"></div>
-    </section>
+  <h1>StreamX Live Streaming</h1>
 
-    <section class="stream-section">
-      <h2>Mulai Streaming</h2>
-      <form id="streamForm">
-        <label>
-          Nama File (hasil upload):
-          <input type="text" name="fileName" placeholder="Nama file video" required>
-        </label>
-        <label>
-          Orientasi:
-          <select name="orientation">
-            <option value="landscape">Landscape</option>
-            <option value="portrait">Portrait</option>
-          </select>
-        </label>
-        <label>
-          FPS:
-          <input type="number" name="fps" value="30" required>
-        </label>
-        <label>
-          Bitrate:
-          <input type="text" name="bitrate" value="2500k" required>
-        </label>
-        <label>
-          Quality (Preset):
-          <input type="text" name="quality" value="fast" required>
-        </label>
-        <label>
-          RTMP URL (pisahkan dengan koma jika multi-stream):
-          <input type="text" name="rtmpUrls" placeholder="rtmp://... , rtmp://..." required>
-        </label>
-        <button type="submit">Mulai Streaming</button>
-      </form>
-      <div id="streamResult"></div>
-    </section>
-  </main>
+  <section>
+    <h2>Upload Video</h2>
+    <form id="uploadForm">
+      <input type="file" name="video" accept="video/*" required>
+      <button type="submit">Upload</button>
+    </form>
+    <div id="uploadResponse"></div>
+  </section>
+
+  <section>
+    <h2>Mulai Streaming</h2>
+    <form id="streamForm">
+      <input type="text" name="filename" placeholder="Masukkan nama file (hasil upload)" required>
+      <!-- Optional: pengguna bisa mengganti URL RTMP jika diperlukan -->
+      <input type="text" name="rtmpUrl" placeholder="RTMP URL (opsional)" value="rtmps://live-api-s.facebook.com:443/rtmp/FB-2062378527522704-0-Ab2r5gJPGBAybYSSp3rG9KKL">
+      <button type="submit">Start Streaming</button>
+    </form>
+    <div id="streamResponse"></div>
+  </section>
 
   <script src="script.js"></script>
 </body>
